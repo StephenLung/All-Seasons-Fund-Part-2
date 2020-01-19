@@ -10,6 +10,26 @@ output:
 
 ---
 
+# All Seasons Portfolio Part 2
+
+My third post to connect my learnings with my personal passion.
+
+
+# Three items coincided to make this idea come to fruition 
+
+## Business Science Problem Framework (BSPF)
+
+1.  How To Successfully Manage A Data Science Project: The Business Science Problem Framework from Matt Dancho's Business Science University 
+With the increasing array of tools, I was swept away into some meaningless directions between advanced algorithms and other statistics. Therefofare I sat myself down to use a streamlined framework called the BSPF to re-orient myself. The BSPF is a systematic process to apply data science to business built on the learnings of Ray Dalio's philosophies in the book, Principles and Crisp DM
+(https://www.business-science.io/business/2018/06/19/business-science-problem-framework.html)
+
+2. Principles by Ray Dalio (https://www.principles.com/) and the principles used in developing the BSPF
+
+3. Reading the wealth of articles on Reproducible Finance with R: Code Flows and Shiny Apps for Portfolio Analysis by Jonathan K. Regenstein (http://www.reproduciblefinance.com/)
+
+
+_Credits go to both Matt Dancho and Jonathan K Regenstein in making this post possible. Matt for educating me and creating the tidyquant package and Jonathan for putting together a book for beginners._
+
 \newpage
 \tableofcontents 
 \newpage
@@ -45,11 +65,13 @@ pacman::p_load("tidyquant",
 My third post to connect my learnings with my personal passion.
 
 
-# Business Science Problem Framework (BSPF)
+# Three items coincided to make this idea come to fruition 
 
-- With the increasing array of tools, I was swept away into some meaningless directions between advanced algorithms and other statistics. Therefofare I sat myself down to use a streamlined framework called the BSPF to re-orient myself. The BSPF is a systematic process to apply data science to business built on the learnings of Ray Dalio's philosophies in the book, Principles and Crisp DM
+## Business Science Problem Framework (BSPF)
 
-1. How To Successfully Manage A Data Science Project: The Business Science Problem Framework from Matt Dancho's Business Science University (https://www.business-science.io/business/2018/06/19/business-science-problem-framework.html)
+1.  How To Successfully Manage A Data Science Project: The Business Science Problem Framework from Matt Dancho's Business Science University 
+With the increasing array of tools, I was swept away into some meaningless directions between advanced algorithms and other statistics. Therefofare I sat myself down to use a streamlined framework called the BSPF to re-orient myself. The BSPF is a systematic process to apply data science to business built on the learnings of Ray Dalio's philosophies in the book, Principles and Crisp DM
+(https://www.business-science.io/business/2018/06/19/business-science-problem-framework.html)
 ```{r, out.width = "500px", echo = FALSE}
 #PICTURES: Showcasing the picture of the book and the course
 knitr::include_graphics("Images/Business Science Framework - V2.JPG")
@@ -57,7 +79,7 @@ knitr::include_graphics("Images/Business Science Framework - V2.JPG")
 
 \newpage
 
-2. Principles by Ray Dalio (https://www.principles.com/)
+2. Principles by Ray Dalio (https://www.principles.com/) and the principles used in developing the BSPF
 
 ```{r, out.width = "150px", echo = FALSE}
 
