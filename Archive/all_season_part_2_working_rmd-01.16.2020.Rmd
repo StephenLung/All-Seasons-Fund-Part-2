@@ -1,0 +1,126 @@
+---
+title: "All Seasons Portfolio Part 2"
+author: "Stephen Lung"
+date: "01-06-2020"
+output:
+  pdf_document: default
+  word_document:
+    toc: yes
+    toc_depth: '2'
+  html_document:
+    code_folding: hide
+    df_print: paged
+    highlight: tango
+    number_sections: yes
+    theme: flatly
+    toc: yes
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.align = "center",
+                        message = FALSE,
+                      warning = FALSE)
+options(tinytex.verbose = TRUE)
+```
+
+
+```{r, echo = FALSE}
+setwd("C:/Users/steph/Dropbox/Business University Science/Personal Portfolio/Part 2 Draft/All-Seasons-Fund-Part-2")
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load("tidyquant",
+               "tidyr",
+               "furrr", 
+               "plotly",
+               "tibble",
+               "dplyr",
+               "highcharter",
+               "purrr",
+               "correlationfunnel",
+               "dplyr",
+               "glue",
+               "tibble")
+```
+
+# All Seasons Portfolio Part 2
+
+My third post to connect my learnings with my personal passion.
+
+
+# Business Science Problem Framework (BSPF)
+
+- With the increasing array of tools, I was swept away into some meaningless directions between advanced algorithms and other statistics. Therefofare I sat myself down to use a streamlined framework called the BSPF to re-orient myself. The BSPF is a systematic process to apply data science to business built on the learnings of Ray Dalio's philosophies in the book, Principles and Crisp DM
+
+1. How To Successfully Manage A Data Science Project: The Business Science Problem Framework from Matt Dancho's Business Science University (https://www.business-science.io/business/2018/06/19/business-science-problem-framework.html)
+```{r, out.width = "1000px", echo = FALSE, fig.cap = "Business Science Problem Framework"}
+#PICTURES: Showcasing the picture of the book and the course
+knitr::include_graphics("Images/Business Science Framework - V2.JPG")
+```
+
+
+2. Principles by Ray Dalio (https://www.principles.com/)
+
+```{r, out.width = "200px", echo = FALSE, fig.cap = "Principles"}
+
+#PICTURES: Showcasing the picture of the book and the course
+knitr::include_graphics("Images/Principles Ray Dalio.jpg")
+
+```
+
+
+3. Reading the wealth of articles on Reproducible Finance with R: Code Flows and Shiny Apps for Portfolio Analysis by Jonathan K. Regenstein (http://www.reproduciblefinance.com/)
+```{r, out.width = "200px", echo = FALSE, fig.cap = "Reproducible Finance with R: Code Flows and Shiny Apps for Portfolio Analysis"}
+
+#PICTURES: Showcasing the picture of the book and the course
+knitr::include_graphics("Images/Reproducible Finance with R.jpg")
+
+```
+
+_Credits go to both Matt Dancho and Jonathan K Regenstein in making this post possible. Matt for educating me and creating the tidyquant package and Jonathan for putting together a book for beginners._
+
+# Business Understanding
+
+## Developing a Portfolio based on Ray Dalio's All Weather Fund
+
+In Tony Robbin's book - Master the Game, I learned about the All Weather Fund and more about personal investing for the general public. Since then I decided to complete a deeper dive on this portfolio and the different asset classes to determine if data science can help me to unlock some more financial benefits. 
+
+__Objective and Key Result__
+
+- __Objective:__ Optimize an investment portfolio based on Ray Dalio's All Weather Fund
+
+- __Hypothesis and Key Result:__ An asset weighting with better return per unit of risk exists beyond what Ray Dalio has prescribed  
+
+
+## Breakdown of All Weather Fund
+
+1. 40% Long Term Bonds (TLT)
+2. 30% Stocks (VTI)
+3. 15% Intermediate Term Bonds (IEF)
+4. 7.5% Gold (GLD)
+5. 7.5% Commodities (DBC)
+
+```{r, echo = FALSE}
+#3.0 BUILDING A PORTFOLIO ----
+w <- c(0.3,
+       0.4,
+       0.15,
+       0.075,
+       0.075)
+symbols <- c("VTI", "TLT", "IEF", "GLD", "DBC")
+wts_tbl <- tibble(symbols, w)
+
+
+# wts_tbl %>% 
+#     ggplot(aes(x = "", y = w, fill = symbols)) + 
+#     geom_bar(width = 1, stat = "identity") + 
+#     coord_polar("y", start = 0) + 
+#     theme(axis.text.x = element_blank()) +
+#     geom_text(label = scales::percent(w), position = position_stack(vjust = 0.5)) +
+#     scale_fill_tq() + 
+#     labs(x = "", y = "", fill = "",
+#          title = "Asset weights in portfolio"
+#          # caption = "Ray Dalio's All Weather Fund"
+#          )
+```
+
