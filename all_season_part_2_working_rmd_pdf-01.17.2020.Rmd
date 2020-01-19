@@ -135,7 +135,7 @@ Here's a breakdown of the workflow I used to create the All Seasons Portfolio:
 
 4. __Modelling:__ Forecast the Portfolio returns with machine learning using h2o package
 
-[UPDATE]5. Visualize the investment growth of the portfolio based on a $10,000 investment
+5. __Tuning:__ Initial dive into tuning parameters of a deep_learning algorithm
 
 # Walk through - Building the All Weather Fund portfolio with tidyquant
 
@@ -358,6 +358,7 @@ std_dev_comparison_tbl %>%
 
 ```
 
+\newpage
 
 # Modelling with h2o
 
@@ -404,255 +405,255 @@ Port_FF_5_tbl %>%
 To compare, I've calculated a few residual metrics. These metrics help to evaluate how the accuracy of the model on the testing dataset.
 Typically, MAPE is the more reliable metric however it does not perform well when the metrics are low (ie. percentage returns). This causes MAPE to be very high. As a result, the more reliable measure to use is Mean Absolute Error (MAE).
 
-<!-- ```{r, include = FALSE} -->
-<!-- # 6.0 Modelling ---- -->
-<!-- # Start up h2o -->
-<!-- h2o.init() -->
-<!-- ``` -->
+```{r, include = FALSE}
+# 6.0 Modelling ----
+# Start up h2o
+h2o.init()
+```
 
 
-<!-- ```{r} -->
-<!-- h2o.no_progress() -->
+```{r}
+h2o.no_progress()
 
-<!-- portfolio_return_tbl_clean <- Port_FF_5_tbl %>% -->
-<!--     na.omit() %>% -->
-<!--     tk_augment_timeseries_signature() %>% -->
-<!--     select_if(~ !is.Date(.)) %>% -->
-<!--     select_if(~ !any(is.na(.))) %>% -->
-<!--     mutate_if(is.ordered, ~as.character(.) %>% as.factor) -->
+portfolio_return_tbl_clean <- Port_FF_5_tbl %>%
+    na.omit() %>%
+    tk_augment_timeseries_signature() %>%
+    select_if(~ !is.Date(.)) %>%
+    select_if(~ !any(is.na(.))) %>%
+    mutate_if(is.ordered, ~as.character(.) %>% as.factor)
 
-<!-- train_tbl <- portfolio_return_tbl_clean %>% filter(year< 2019) -->
-<!-- train_tbl_h2o <- as.h2o(train_tbl) -->
+train_tbl <- portfolio_return_tbl_clean %>% filter(year< 2019)
+train_tbl_h2o <- as.h2o(train_tbl)
 
-<!-- test_tbl <- portfolio_return_tbl_clean %>% filter(year == 2019) -->
-<!-- test_tbl_h2o <- as.h2o(test_tbl) -->
+test_tbl <- portfolio_return_tbl_clean %>% filter(year == 2019)
+test_tbl_h2o <- as.h2o(test_tbl)
 
-<!-- y <- "Portfolio" -->
-<!-- x <- setdiff(names(train_tbl_h2o), y) -->
+y <- "Portfolio"
+x <- setdiff(names(train_tbl_h2o), y)
 
-<!-- portfolio_automl_models_h2o <- h2o.automl( -->
-<!--     x = x, -->
-<!--     y =y, -->
-<!--     training_frame = train_tbl_h2o, -->
-<!--     max_runtime_secs = 60, -->
-<!--     stopping_metric = "deviance") -->
+portfolio_automl_models_h2o <- h2o.automl(
+    x = x,
+    y =y,
+    training_frame = train_tbl_h2o,
+    max_runtime_secs = 60,
+    stopping_metric = "deviance")
 
-<!-- automl_leader <- portfolio_automl_models_h2o@leader -->
-<!-- automl_leader_name <- portfolio_automl_models_h2o@leaderboard %>% -->
-<!--     as_tibble() %>% -->
-<!--     mutate(model_type = str_split(model_id, pattern = "_", simplify = TRUE)[,1], -->
-<!--            model_name = glue::glue("{model_type} Model") %>% as.character()) %>% -->
-<!--     slice(1) %>% -->
-<!--     pull(model_name) -->
-<!-- prediction_h2o_leader <- h2o.predict(automl_leader, newdata = test_tbl_h2o) -->
+automl_leader <- portfolio_automl_models_h2o@leader
+automl_leader_name <- portfolio_automl_models_h2o@leaderboard %>%
+    as_tibble() %>%
+    mutate(model_type = str_split(model_id, pattern = "_", simplify = TRUE)[,1],
+           model_name = glue::glue("{model_type} Model") %>% as.character()) %>%
+    slice(1) %>%
+    pull(model_name)
+prediction_h2o_leader <- h2o.predict(automl_leader, newdata = test_tbl_h2o)
 
-<!-- error_tbl <- Port_FF_5_tbl %>% -->
-<!--     filter(lubridate::year(date) == 2019) %>% -->
-<!--     na.omit() %>% -->
-<!--     add_column(pred = prediction_h2o_leader %>% as.tibble() %>% pull(predict)) %>% -->
-<!--     rename(actual = Portfolio) %>% -->
-<!--     mutate( -->
-<!--         error = actual - pred, -->
-<!--         error_pct = error/actual -->
-<!--     ) -->
-<!-- error_tbl %>% -->
-<!--     summarize( -->
-<!--         me = mean(error), -->
-<!--         rmse = mean(error^2)^0.5, -->
-<!--         mae = mean(abs(error)), -->
-<!--         mape = mean(abs(error_pct)), -->
-<!--         mpe = mean(error_pct) -->
-<!--     ) -->
-
-
-<!-- ``` -->
-
-<!-- The following is a visualization after applying three different models on the testing dataset to compare with the actual returns of the portfolio (in this case 3 GBMs). Although the forecast is still in its infancy, there are opportunities to improve. -->
+error_tbl <- Port_FF_5_tbl %>%
+    filter(lubridate::year(date) == 2019) %>%
+    na.omit() %>%
+    add_column(pred = prediction_h2o_leader %>% as.tibble() %>% pull(predict)) %>%
+    rename(actual = Portfolio) %>%
+    mutate(
+        error = actual - pred,
+        error_pct = error/actual
+    )
+error_tbl %>%
+    summarize(
+        me = mean(error),
+        rmse = mean(error^2)^0.5,
+        mae = mean(abs(error)),
+        mape = mean(abs(error_pct)),
+        mpe = mean(error_pct)
+    )
 
 
-<!-- ```{r} -->
-<!-- source("00_Scripts/prediction_error_tbl.R") -->
+```
 
-<!-- # Reproducibility prediction based on leaderboard models -->
-<!-- model_1 <- prediction_error_tbl(Portfolio_tbl = Port_FF_5_tbl, -->
-<!--                                                 h2o_leaderboard = portfolio_automl_models_h2o, -->
-<!--                                                 n = 1, -->
-<!--                                                 test_tbl = test_tbl_h2o) -->
-<!-- model_2 <- prediction_error_tbl(Portfolio_tbl = Port_FF_5_tbl, -->
-<!--                                                  h2o_leaderboard = portfolio_automl_models_h2o, -->
-<!--                                                  n = 2, -->
-<!--                                                  test_tbl = test_tbl_h2o) -->
-<!-- model_3 <- prediction_error_tbl(Portfolio_tbl = Port_FF_5_tbl, -->
-<!--                                                          h2o_leaderboard = portfolio_automl_models_h2o, -->
-<!--                                                          n = 3, -->
-<!--                                                          test_tbl = test_tbl_h2o) -->
-<!-- # Plot -->
-<!-- #Spooky theme -->
-
-<!-- p_load("extrafont") -->
-<!-- library(extrafont) -->
-<!-- loadfonts(device="win") -->
-<!-- theme_spooky = function(base_size = 10, base_family = "Chiller") { -->
-
-<!--     theme_grey(base_size = base_size, base_family = base_family) %+replace% -->
-
-<!--         theme( -->
-<!--             # Specify axis options -->
-<!--             axis.line = element_blank(), -->
-<!--             axis.text.x = element_text(size = base_size*0.8, color = "white", lineheight = 0.9), -->
-<!--             axis.text.y = element_text(size = base_size*0.8, color = "white", lineheight = 0.9), -->
-<!--             axis.ticks = element_line(color = "white", size  =  0.2), -->
-<!--             axis.title.x = element_text(size = base_size, color = "white", margin = margin(0, 10, 0, 0)), -->
-<!--             axis.title.y = element_text(size = base_size, color = "white", angle = 90, margin = margin(0, 10, 0, 0)), -->
-<!--             axis.ticks.length = unit(0.3, "lines"), -->
-<!--             # Specify legend options -->
-<!--             legend.background = element_rect(color = NA, fill = " gray10"), -->
-<!--             legend.key = element_rect(color = "white",  fill = " gray10"), -->
-<!--             legend.key.size = unit(1.2, "lines"), -->
-<!--             legend.key.height = NULL, -->
-<!--             legend.key.width = NULL, -->
-<!--             legend.text = element_text(size = base_size*0.8, color = "white"), -->
-<!--             legend.title = element_text(size = base_size*0.8, face = "bold", hjust = 0, color = "white"), -->
-<!--             legend.position = "none", -->
-<!--             legend.text.align = NULL, -->
-<!--             legend.title.align = NULL, -->
-<!--             legend.direction = "vertical", -->
-<!--             legend.box = NULL, -->
-<!--             # Specify panel options -->
-<!--             panel.background = element_rect(fill = " gray10", color  =  NA), -->
-<!--             #panel.border = element_rect(fill = NA, color = "white"), -->
-<!--             panel.border = element_blank(), -->
-<!--             panel.grid.major = element_line(color = "grey35"), -->
-<!--             panel.grid.minor = element_line(color = "grey20"), -->
-<!--             panel.spacing = unit(0.5, "lines"), -->
-<!--             # Specify facetting options -->
-<!--             strip.background = element_rect(fill = "grey30", color = "grey10"), -->
-<!--             strip.text.x = element_text(size = base_size*0.8, color = "white"), -->
-<!--             strip.text.y = element_text(size = base_size*0.8, color = "white",angle = -90), -->
-<!--             # Specify plot options -->
-<!--             plot.background = element_rect(color = " gray10", fill = " gray10"), -->
-<!--             plot.title = element_text(size = base_size*1.2, color = "white",hjust=0,lineheight=1.25, -->
-<!--                                       margin=margin(2,2,2,2)), -->
-<!--             plot.subtitle = element_text(size = base_size*1, color = "white",hjust=0,  margin=margin(2,2,2,2)), -->
-<!--             plot.caption = element_text(size = base_size*0.8, color = "white",hjust=0), -->
-<!--             plot.margin = unit(rep(1, 4), "lines") -->
-
-<!--         ) -->
-
-<!-- } -->
-
-<!-- Port_FF_5_tbl %>% -->
-<!--     na.omit() %>% -->
-<!--     # filter(lubridate::year(date) >= 2018) %>% -->
-<!--     ggplot(aes(date, Portfolio)) + -->
-<!--     geom_point(size = 2, color = "gray", alpha = 0.5, shape = 21, fill = "orange") + -->
-<!--     geom_line(color = "orange", size = 0.5) + -->
-<!--     geom_ma(n = 12, color = "white") + -->
-<!--     # Predictions - Spooky Purple (Model 1) -->
-<!--     geom_point(aes(y = pred), size = 2, color = "gray", alpha = 1, shape = 21, fill = "purple", data = model_1) + -->
-<!--     geom_line(aes(y = pred), color = "purple", size = 0.5, data = model_1) + -->
-<!--     # Predictions - Spooky Purple (Model 2) -->
-<!--     geom_point(aes(y = pred), size = 2, color = "gray", alpha = 1, shape = 21, fill = palette_light()[[2]], data = model_2) + -->
-<!--     geom_line(aes(y = pred), color = palette_light()[[2]], size = 0.5, data = model_2) + -->
-<!--     # Predictions - Spooky Purple (Model 3) -->
-<!--     geom_point(aes(y = pred), size = 2, color = "gray", alpha = 1, shape = 21, fill = palette_light()[[3]], data = model_3) + -->
-<!--     geom_line(aes(y = pred), color = palette_light()[[3]], size = 0.5, data = model_3) + -->
-<!--     # Aesthetics -->
-<!--     theme_spooky(base_size = 20, base_family = "Chiller") + -->
-<!--     annotate("text", x = ymd("2019-05-01"), y = -0.015, -->
-<!--              color = "purple", label = pull_model_name(h2o_leaderboard = portfolio_automl_models_h2o, -->
-<!--                                                        n = 1)) + -->
-<!--     annotate("text", x = ymd("2019-02-01"), y = 0.04000, -->
-<!--              color = palette_light()[[2]], label = pull_model_name(h2o_leaderboard = portfolio_automl_models_h2o, -->
-<!--                                                                    n = 2)) + -->
-<!--     annotate("text", x = ymd("2019-09-01"), y = -0.030, -->
-<!--              color = palette_light()[[3]], label = pull_model_name(h2o_leaderboard = portfolio_automl_models_h2o, -->
-<!--                                                        n = 3)) + -->
-<!--     scale_x_date(date_breaks = "1 year", date_labels = "%Y") + -->
-<!--     scale_y_continuous(labels = scales::percent_format())+ -->
-<!--     labs(title = "Forecast of Portfolio Returns: 2019", -->
-<!--          subtitle = "MAE = 1.39%", -->
-<!--          caption = "Ray Dalio's All Weather Portfolio", -->
-<!--          y = "Portfolio Returns", x = "Date") -->
-<!-- ``` -->
+The following is a visualization after applying three different models on the testing dataset to compare with the actual returns of the portfolio (in this case 3 GBMs). Although the forecast is still in its infancy, there are opportunities to improve.
 
 
+```{r}
+source("00_Scripts/prediction_error_tbl.R")
 
-<!-- ## h2o leaderboard metrics {.tabset .tabset-face .tabset-pills} -->
+# Reproducibility prediction based on leaderboard models
+model_1 <- prediction_error_tbl(Portfolio_tbl = Port_FF_5_tbl,
+                                                h2o_leaderboard = portfolio_automl_models_h2o,
+                                                n = 1,
+                                                test_tbl = test_tbl_h2o)
+model_2 <- prediction_error_tbl(Portfolio_tbl = Port_FF_5_tbl,
+                                                 h2o_leaderboard = portfolio_automl_models_h2o,
+                                                 n = 2,
+                                                 test_tbl = test_tbl_h2o)
+model_3 <- prediction_error_tbl(Portfolio_tbl = Port_FF_5_tbl,
+                                                         h2o_leaderboard = portfolio_automl_models_h2o,
+                                                         n = 3,
+                                                         test_tbl = test_tbl_h2o)
+# Plot
+#Spooky theme
 
-<!-- I have created a reproducible function to evaluate the top N models based on a metric. Since this is a regression analysis, the available metrics are mae, mean_residual_variance, rmse, rmse and rmsle.  -->
-<!-- In the following examples, I share three visualizations based on the order by mean_residual_variance, by RMSE and by MAE. The order doesn't really change except at MAE.  -->
+# p_load("extrafont")
+# library(extrafont)
+# loadfonts(device="win")
+# theme_spooky = function(base_size = 10, base_family = "Chiller") {
+# 
+#     theme_grey(base_size = base_size, base_family = base_family) %+replace%
+# 
+#         theme(
+#             # Specify axis options
+#             axis.line = element_blank(),
+#             axis.text.x = element_text(size = base_size*0.8, color = "white", lineheight = 0.9),
+#             axis.text.y = element_text(size = base_size*0.8, color = "white", lineheight = 0.9),
+#             axis.ticks = element_line(color = "white", size  =  0.2),
+#             axis.title.x = element_text(size = base_size, color = "white", margin = margin(0, 10, 0, 0)),
+#             axis.title.y = element_text(size = base_size, color = "white", angle = 90, margin = margin(0, 10, 0, 0)),
+#             axis.ticks.length = unit(0.3, "lines"),
+#             # Specify legend options
+#             legend.background = element_rect(color = NA, fill = " gray10"),
+#             legend.key = element_rect(color = "white",  fill = " gray10"),
+#             legend.key.size = unit(1.2, "lines"),
+#             legend.key.height = NULL,
+#             legend.key.width = NULL,
+#             legend.text = element_text(size = base_size*0.8, color = "white"),
+#             legend.title = element_text(size = base_size*0.8, face = "bold", hjust = 0, color = "white"),
+#             legend.position = "none",
+#             legend.text.align = NULL,
+#             legend.title.align = NULL,
+#             legend.direction = "vertical",
+#             legend.box = NULL,
+#             # Specify panel options
+#             panel.background = element_rect(fill = " gray10", color  =  NA),
+#             #panel.border = element_rect(fill = NA, color = "white"),
+#             panel.border = element_blank(),
+#             panel.grid.major = element_line(color = "grey35"),
+#             panel.grid.minor = element_line(color = "grey20"),
+#             panel.spacing = unit(0.5, "lines"),
+#             # Specify facetting options
+#             strip.background = element_rect(fill = "grey30", color = "grey10"),
+#             strip.text.x = element_text(size = base_size*0.8, color = "white"),
+#             strip.text.y = element_text(size = base_size*0.8, color = "white",angle = -90),
+#             # Specify plot options
+#             plot.background = element_rect(color = " gray10", fill = " gray10"),
+#             plot.title = element_text(size = base_size*1.2, color = "white",hjust=0,lineheight=1.25,
+#                                       margin=margin(2,2,2,2)),
+#             plot.subtitle = element_text(size = base_size*1, color = "white",hjust=0,  margin=margin(2,2,2,2)),
+#             plot.caption = element_text(size = base_size*0.8, color = "white",hjust=0),
+#             plot.margin = unit(rep(1, 4), "lines")
+# 
+#         )
+# 
+# }
 
-<!-- ### Leaderboard metrics by mean_residual_deviance -->
-
-<!-- ```{r, out.width = "1000px"} -->
-<!-- source(file = "00_Scripts/plot_FF_leaderboard.R") -->
-
-<!-- portfolio_automl_models_h2o@leaderboard %>%  -->
-<!--     plot_FF_leaderboard(order_by = "mean", n_max = 5, pretty_breaks = 2, size = 2) -->
-
-<!-- ``` -->
-
-
-<!-- ### Leaderboard metrics by RMSE -->
-
-<!-- ```{r, out.width = "1000px"} -->
-<!-- portfolio_automl_models_h2o@leaderboard %>%  -->
-<!--     plot_FF_leaderboard(order_by = "rmse", n_max = 5, pretty_breaks = 2, size = 2) -->
-<!-- ``` -->
-
-<!-- ### Leaderboard metrics by MAE -->
-
-<!-- ```{r, out.width = "1000px"} -->
-<!-- portfolio_automl_models_h2o@leaderboard %>%  -->
-<!--     plot_FF_leaderboard(order_by = "mae", n_max = 5, pretty_breaks = 2, size = 2) -->
-<!-- ``` -->
+Port_FF_5_tbl %>%
+    na.omit() %>%
+    # filter(lubridate::year(date) >= 2018) %>%
+    ggplot(aes(date, Portfolio)) +
+    geom_point(size = 2, color = "gray", alpha = 0.5, shape = 21, fill = "orange") +
+    geom_line(color = "orange", size = 0.5) +
+    geom_ma(n = 12, color = "white") +
+    # Predictions - Spooky Purple (Model 1)
+    geom_point(aes(y = pred), size = 2, color = "gray", alpha = 1, shape = 21, fill = "purple", data = model_1) +
+    geom_line(aes(y = pred), color = "purple", size = 0.5, data = model_1) +
+    # Predictions - Spooky Purple (Model 2)
+    geom_point(aes(y = pred), size = 2, color = "gray", alpha = 1, shape = 21, fill = palette_light()[[2]], data = model_2) +
+    geom_line(aes(y = pred), color = palette_light()[[2]], size = 0.5, data = model_2) +
+    # Predictions - Spooky Purple (Model 3)
+    geom_point(aes(y = pred), size = 2, color = "gray", alpha = 1, shape = 21, fill = palette_light()[[3]], data = model_3) +
+    geom_line(aes(y = pred), color = palette_light()[[3]], size = 0.5, data = model_3) +
+    # Aesthetics
+    # theme_spooky(base_size = 20, base_family = "Chiller") +
+    annotate("text", x = ymd("2019-05-01"), y = -0.015,
+             color = "purple", label = pull_model_name(h2o_leaderboard = portfolio_automl_models_h2o,
+                                                       n = 1)) +
+    annotate("text", x = ymd("2019-02-01"), y = 0.04000,
+             color = palette_light()[[2]], label = pull_model_name(h2o_leaderboard = portfolio_automl_models_h2o,
+                                                                   n = 2)) +
+    annotate("text", x = ymd("2019-09-01"), y = -0.030,
+             color = palette_light()[[3]], label = pull_model_name(h2o_leaderboard = portfolio_automl_models_h2o,
+                                                       n = 3)) +
+    scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+    scale_y_continuous(labels = scales::percent_format())+
+    labs(title = "Forecast of Portfolio Returns: 2019",
+         subtitle = "MAE = 1.39%",
+         caption = "Ray Dalio's All Weather Portfolio",
+         y = "Portfolio Returns", x = "Date")
+```
 
 
 
-<!-- # Hyper Parameter Tuning -->
+## h2o leaderboard metrics {.tabset .tabset-face .tabset-pills}
 
-<!-- ## Tuning of DeepLearning h2o model -->
+I have created a reproducible function to evaluate the top N models based on a metric. Since this is a regression analysis, the available metrics are mae, mean_residual_variance, rmse, rmse and rmsle.
+In the following examples, I share three visualizations based on the order by mean_residual_variance, by RMSE and by MAE. The order doesn't really change except at MAE.
 
-<!-- Within the deeplearning model, there are a number of hyper parameters available to be tuned including but not limited to hidden and epochs. By running h2o_model@all_parameters, you can identify all the parameters associated with the model.  -->
+\newpage
 
-<!-- In the following analysis, multiple deep learning models were generated based on my experimentation of several different parameters. The conclusion was the deep_learning model 9 had the best MAE. However this MAE still fell short of the MAE generated from the GBM models.  -->
+### Leaderboard metrics by mean_residual_deviance
+
+```{r, out.width = "1000px"}
+source(file = "00_Scripts/plot_FF_leaderboard.R")
+
+portfolio_automl_models_h2o@leaderboard %>%
+    plot_FF_leaderboard(order_by = "mean", n_max = 5, pretty_breaks = 2, size = 2)
+
+```
+
+\newpage
+
+### Leaderboard metrics by RMSE
+
+```{r, out.width = "1000px"}
+portfolio_automl_models_h2o@leaderboard %>%
+    plot_FF_leaderboard(order_by = "rmse", n_max = 5, pretty_breaks = 2, size = 2)
+```
+
+\newpage
+
+### Leaderboard metrics by MAE
+
+```{r, out.width = "1000px"}
+portfolio_automl_models_h2o@leaderboard %>%
+    plot_FF_leaderboard(order_by = "mae", n_max = 5, pretty_breaks = 2, size = 2)
+```
+
+\newpage
+
+# Hyper Parameter Tuning
+
+## Tuning of DeepLearning h2o model
+
+Within the deeplearning model, there are a number of hyper parameters available to be tuned including but not limited to hidden and epochs. By running h2o_model@all_parameters, you can identify all the parameters associated with the model.
+
+In the following analysis, multiple deep learning models were generated based on my experimentation of several different parameters. The conclusion was the deep_learning model 9 had the best MAE. However this MAE still fell short of the MAE generated from the GBM models.
 
 
-<!-- ```{r} -->
-<!-- # deeplearning_grid_01 <- h2o.grid( -->
-<!-- #     algorithm = "deeplearning", -->
-<!-- #     x = x, -->
-<!-- #     y = y, -->
-<!-- #     grid_id = "deeplearning_grid_01", -->
-<!-- #     training_frame = train_tbl_h2o, -->
-<!-- #     # validation_frame = F, -->
-<!-- #     nfolds = 5, -->
-<!-- #      -->
-<!-- #     hyper_params = list( -->
-<!-- #         hidden = list(c(10, 10, 10), c(50, 20, 10), c(20, 20, 20)), -->
-<!-- #         epochs = c(5, 10, 20)  #allow to generalize to new data -->
-<!-- #     ) -->
-<!-- # ) -->
-<!-- #  -->
-<!-- # h2o.getGrid(grid_id = "deeplearning_grid_01", sort_by = "mae", decreasing = FALSE) -->
-<!-- ``` -->
+```{r}
+# deeplearning_grid_01 <- h2o.grid(
+#     algorithm = "deeplearning",
+#     x = x,
+#     y = y,
+#     grid_id = "deeplearning_grid_01",
+#     training_frame = train_tbl_h2o,
+#     # validation_frame = F,
+#     nfolds = 5,
+#
+#     hyper_params = list(
+#         hidden = list(c(10, 10, 10), c(50, 20, 10), c(20, 20, 20)),
+#         epochs = c(5, 10, 20)  #allow to generalize to new data
+#     )
+# )
+#
+# h2o.getGrid(grid_id = "deeplearning_grid_01", sort_by = "mae", decreasing = FALSE)
+```
 
-<!-- ```{r} -->
-<!-- h2o.getModel("deeplearning_grid_01_model_9") %>% h2o.performance(newdata = as.h2o(test_tbl_h2o)) -->
-<!-- ``` -->
+# Parting Thoughts
+Visualizing the forecasts and seeing myself inch closer was the most fulfilling accomplishment. Forecasting may seem simple but it ain't easy - it took me numerous days to figure out what machine learning really is and how to apply it to my problem - h2o automl is really the live saver.
 
+***"Success is a journey, not a destination. The doing is often more important than the outcome"*** - Arthur Ashe
 
-<!-- # Parting Thoughts -->
-<!-- Visualizing the forecasts and seeing myself inch closer was the most fulfilling accomplishment. Forecasting may seem simple but it ain't easy - it took me numerous days to figure out what machine learning really is and how to apply it to my problem - h2o automl is really the live saver. -->
+It was really exciting to see the illustrations and analysis I could make from what I have learned so far in. I plan on writing a Part 3 to this post as I dig deeper into this portfolio by solving an optimization problem to determine the perfect asset weights.
 
-<!-- _"Success is a journey, not a destination. The doing is often more important than the outcome"_ - Arthur Ashe  -->
+- Monte Carlo Simulation to simulate portfolio returns based on different asset weightings
 
-<!-- It was really exciting to see the illustrations and analysis I could make from what I have learned so far in. I plan on writing a Part 3 to this post as I dig deeper into this portfolio by solving an optimization problem to determine the perfect asset weights.  -->
+- Building a flex dashboard and integrating with shiny for user inputs to create different portfolio combinations
 
-<!-- - Monte Carlo Simulation to simulate portfolio returns based on different asset weightings  -->
-
-<!-- - Building a flex dashboard and integrating with shiny for user inputs to create different portfolio combinations -->
-
-<!-- If you want to learn more, I am currently in a four part course learning Data Science for Business. I have completed Business Science 201 course and close to completion of the Business Science 102 course.  -->
+If you want to learn more, I am currently in a four part course learning Data Science for Business. I have completed Business Science 201 course and close to completion of the Business Science 102 course.
 
